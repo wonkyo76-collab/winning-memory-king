@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>위닝 10초 기억왕 V10 BATTLE</title>
+<title>위닝 10초 기억왕 · 모바일 안정화</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
 body{background:radial-gradient(circle at 50% 0,#1674e8,#07162f 45%,#020815 100%);color:white;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -305,6 +305,7 @@ function startSolo(){names=["PLAYER",""];round=1;scores=[0,0];correct=[0,0];comb
 const tourBaseCounts=[0,2,3,4,4,5,6];
 let soloQuestionPositions=[];
 let soloPairQuestion=false;
+let soloAnswerLocked=false;
 function soloDifficulty(){
  const tier=Math.max(1,Math.min(6,selectedTournament));
  return {tier,count:tourBaseCounts[tier],pair:(tier===4 && [4,7,10,13].includes(round))};
@@ -335,6 +336,7 @@ function showSoloMemory(){
  timer=setInterval(()=>{sec--;$("timer").textContent=sec;if(sec<=0){clearInterval(timer);askSolo()}},1000);
 }
 function askSolo(){
+ soloAnswerLocked=false;
  audioReady();startBgm();$("memoryBox").classList.add("hidden");$("questionBox").classList.remove("hidden");
  const d=soloDifficulty();
  const position=soloQuestionPositions[0]+1;
@@ -358,6 +360,8 @@ function askSolo(){
    const b=document.createElement("button");
    b.className="ans";b.textContent=v;
    b.addEventListener("click",()=>{
+     if(soloAnswerLocked)return;
+     soloAnswerLocked=true;
      const isCorrect=(v===correctAnswer);
      b.classList.add(isCorrect?"answerHit":"answerWrong");
      chooseSolo(isCorrect);
@@ -441,7 +445,7 @@ function audioReady(){
     if(!AC)return false;
     audioCtx=new AC();
   }
-  if(audioCtx.state==="suspended")audioCtx.resume();
+  if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
   return true;
 }
 function note(freq,dur=.13,type="triangle",vol=.035,when=0){
@@ -455,11 +459,13 @@ function note(freq,dur=.13,type="triangle",vol=.035,when=0){
 const bgmNotes=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46,523.25,659.25,783.99,1046.5,880,783.99,659.25,587.33];
 function bgmTick(){
   if(!musicOn||!audioCtx)return;
+  try{
   const f=bgmNotes[bgmStep%bgmNotes.length];
   note(f,.14,"triangle",.045);
   if(bgmStep%2===0) note(f/2,.18,"sine",.024);
   if(bgmStep%4===0) note(130.81,.08,"square",.012);
   bgmStep++;
+  }catch(e){stopBgm();console.warn("BGM unavailable",e)}
 }
 function startBgm(){
   if(!musicOn||!audioReady())return;
@@ -498,13 +504,15 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 function correctFanfare(){
-  if(!audioReady())return;
+  try{if(!audioReady())return;
   const seq=[[659.25,0],[783.99,.08],[1046.5,.17],[1318.5,.29]];
   seq.forEach(([f,t])=>{note(f,.16,"triangle",.075,t);note(f/2,.20,"sine",.026,t)});
+  }catch(e){console.warn("Sound unavailable",e)}
 }
 function showCorrectCelebration(comboNow){
-  correctFanfare();
+  try{correctFanfare()}catch(e){}
   const el=$("correctCelebration"),sub=$("ceSub");
+  if(!el||!sub)return;
   sub.textContent=comboNow>=5?"🔥 SUPER COMBO!":comboNow>=3?"⚡ GREAT COMBO!":"✨ PERFECT JUMP!";
   el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
   setTimeout(()=>el.classList.remove("show"),800);
@@ -517,26 +525,7 @@ function showCorrectCelebration(comboNow){
 #home .v26btn,#home .v26tours button{position:relative!important;z-index:1001!important;touch-action:manipulation!important;pointer-events:auto!important}
 #home .v26hero{pointer-events:none!important}
 </style>
-<script>
-(function(){
-function safeStart(which){
- const b=document.getElementById(which);
- if(!b)return;
- b.addEventListener('click',function(ev){
-   if(window.__winningHandled)return;
-   window.__winningHandled=true;
-   setTimeout(()=>window.__winningHandled=false,100);
-   if(which==='soloBtn'){
-     const g=document.getElementById('game');
-     if(g && g.classList.contains('hidden')){
-       try{if(typeof startSolo==='function')startSolo()}catch(e){console.error('startSolo:',e)}
-     }
-   }
- },{passive:true});
-}
-safeStart('soloBtn');safeStart('battleBtn');
-})();
-</script>
+
 <style>
 .wrPanel{margin:12px 0;padding:14px;border:1px solid #e8c85b;border-radius:18px;background:linear-gradient(145deg,#133b75,#071a3c);color:white}
 .wrPanel h3{margin:0 0 9px;font-size:17px;color:#ffe47d}.wrRow{display:flex;gap:7px}.wrInput{min-width:0;flex:1;padding:11px;border-radius:10px;border:1px solid #7bb7ec;font-size:15px}.wrButton{border:0;border-radius:10px;padding:11px 13px;background:#ffd24b;color:#14213a;font-weight:900}.wrSmall{font-size:12px;color:#c1d8f7;margin:8px 0}.wrRecords{display:grid;gap:6px;margin-top:8px}.wrRecord{display:flex;justify-content:space-between;gap:8px;padding:9px;border-radius:9px;background:#ffffff13;font-size:12px}.wrRecord strong{color:#ffe47d}.wrSelect{width:100%;padding:10px;border-radius:10px;margin:6px 0;font-size:14px}.wrRankRow{padding:8px;border-bottom:1px solid #ffffff23;font-size:13px}
