@@ -242,6 +242,11 @@ animation:ceSpin .7s linear}
       <button data-tour="6" class="tourLocked" disabled><i>6</i><b>올림픽대회</b><small>🔒 잠금</small></button>
     </div>
   </div>
+  <div class="winningCredit" style="padding:15px 12px 18px;text-align:center;background:#061b38;color:#d6e6ff;font-size:12px;line-height:1.75;border-top:1px solid #cda94e66">
+    <strong style="display:block;color:#ffe06b;font-size:15px">개발자 최원교</strong>
+    <span>© 2026 최원교 · 위닝 10초 기억왕</span><br>
+    <span>무단 복제 및 재배포 금지 · 본 게임의 콘텐츠와 프로그램을 허락 없이 복제·수정·재배포할 수 없습니다.</span>
+  </div>
 </section>
 <section id="unlockParade" class="unlockParade hidden">
   <div class="confetti" aria-hidden="true"></div>
@@ -252,6 +257,7 @@ animation:ceSpin .7s linear}
   <div class="keyBurst">🔑</div>
   <div id="paradeUnlock" class="paradeUnlock">부평구대회 출전권 획득!</div>
   <button id="paradeNext" class="paradeNext">다음 대회 도전 ▶</button>
+  <button id="paradeHome" class="paradeNext" type="button" style="margin-top:14px;background:linear-gradient(#eef5ff,#bcd7ff);color:#092750;box-shadow:0 7px 0 #385c8e">🏠 처음 메인으로 · 재도전</button>
 </section>
 
 <section id="setup" class="card hidden"><div class="title">⚔️ 2인 BATTLE</div><p class="hint">한 대의 휴대폰으로 번갈아 도전합니다.</p>
@@ -416,6 +422,7 @@ function tournamentPassed(){
   screen('unlockParade');tone(1200,.45);unlockParadeSound();
  }
 }
+$('paradeHome').onclick=(e)=>{e.preventDefault();screen('home');refreshTournaments();window.scrollTo({top:0,behavior:'smooth'});};
 $('paradeNext').onclick=(e)=>{
  e.preventDefault();
  if(selectedTournament===6 && $('paradePass').textContent==='올림픽대회 합격!'){
