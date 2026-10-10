@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>위닝 10초 기억왕 · 모바일 안정화</title>
+<title>위닝 10초 기억왕 V10 BATTLE</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif}
 body{background:radial-gradient(circle at 50% 0,#1674e8,#07162f 45%,#020815 100%);color:white;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
@@ -305,7 +305,6 @@ function startSolo(){names=["PLAYER",""];round=1;scores=[0,0];correct=[0,0];comb
 const tourBaseCounts=[0,2,3,4,4,5,6];
 let soloQuestionPositions=[];
 let soloPairQuestion=false;
-let soloAnswerLocked=false;
 function soloDifficulty(){
  const tier=Math.max(1,Math.min(6,selectedTournament));
  return {tier,count:tourBaseCounts[tier],pair:(tier===4 && [4,7,10,13].includes(round))};
@@ -336,7 +335,6 @@ function showSoloMemory(){
  timer=setInterval(()=>{sec--;$("timer").textContent=sec;if(sec<=0){clearInterval(timer);askSolo()}},1000);
 }
 function askSolo(){
- soloAnswerLocked=false;
  audioReady();startBgm();$("memoryBox").classList.add("hidden");$("questionBox").classList.remove("hidden");
  const d=soloDifficulty();
  const position=soloQuestionPositions[0]+1;
@@ -360,8 +358,6 @@ function askSolo(){
    const b=document.createElement("button");
    b.className="ans";b.textContent=v;
    b.addEventListener("click",()=>{
-     if(soloAnswerLocked)return;
-     soloAnswerLocked=true;
      const isCorrect=(v===correctAnswer);
      b.classList.add(isCorrect?"answerHit":"answerWrong");
      chooseSolo(isCorrect);
@@ -445,7 +441,7 @@ function audioReady(){
     if(!AC)return false;
     audioCtx=new AC();
   }
-  if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
+  if(audioCtx.state==="suspended")audioCtx.resume();
   return true;
 }
 function note(freq,dur=.13,type="triangle",vol=.035,when=0){
@@ -459,13 +455,11 @@ function note(freq,dur=.13,type="triangle",vol=.035,when=0){
 const bgmNotes=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46,523.25,659.25,783.99,1046.5,880,783.99,659.25,587.33];
 function bgmTick(){
   if(!musicOn||!audioCtx)return;
-  try{
   const f=bgmNotes[bgmStep%bgmNotes.length];
   note(f,.14,"triangle",.045);
   if(bgmStep%2===0) note(f/2,.18,"sine",.024);
   if(bgmStep%4===0) note(130.81,.08,"square",.012);
   bgmStep++;
-  }catch(e){stopBgm();console.warn("BGM unavailable",e)}
 }
 function startBgm(){
   if(!musicOn||!audioReady())return;
@@ -504,15 +498,13 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 function correctFanfare(){
-  try{if(!audioReady())return;
+  if(!audioReady())return;
   const seq=[[659.25,0],[783.99,.08],[1046.5,.17],[1318.5,.29]];
   seq.forEach(([f,t])=>{note(f,.16,"triangle",.075,t);note(f/2,.20,"sine",.026,t)});
-  }catch(e){console.warn("Sound unavailable",e)}
 }
 function showCorrectCelebration(comboNow){
-  try{correctFanfare()}catch(e){}
+  correctFanfare();
   const el=$("correctCelebration"),sub=$("ceSub");
-  if(!el||!sub)return;
   sub.textContent=comboNow>=5?"🔥 SUPER COMBO!":comboNow>=3?"⚡ GREAT COMBO!":"✨ PERFECT JUMP!";
   el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
   setTimeout(()=>el.classList.remove("show"),800);
@@ -525,7 +517,26 @@ function showCorrectCelebration(comboNow){
 #home .v26btn,#home .v26tours button{position:relative!important;z-index:1001!important;touch-action:manipulation!important;pointer-events:auto!important}
 #home .v26hero{pointer-events:none!important}
 </style>
-
+<script>
+(function(){
+function safeStart(which){
+ const b=document.getElementById(which);
+ if(!b)return;
+ b.addEventListener('click',function(ev){
+   if(window.__winningHandled)return;
+   window.__winningHandled=true;
+   setTimeout(()=>window.__winningHandled=false,100);
+   if(which==='soloBtn'){
+     const g=document.getElementById('game');
+     if(g && g.classList.contains('hidden')){
+       try{if(typeof startSolo==='function')startSolo()}catch(e){console.error('startSolo:',e)}
+     }
+   }
+ },{passive:true});
+}
+safeStart('soloBtn');safeStart('battleBtn');
+})();
+</script>
 <style>
 .wrPanel{margin:12px 0;padding:14px;border:1px solid #e8c85b;border-radius:18px;background:linear-gradient(145deg,#133b75,#071a3c);color:white}
 .wrPanel h3{margin:0 0 9px;font-size:17px;color:#ffe47d}.wrRow{display:flex;gap:7px}.wrInput{min-width:0;flex:1;padding:11px;border-radius:10px;border:1px solid #7bb7ec;font-size:15px}.wrButton{border:0;border-radius:10px;padding:11px 13px;background:#ffd24b;color:#14213a;font-weight:900}.wrSmall{font-size:12px;color:#c1d8f7;margin:8px 0}.wrRecords{display:grid;gap:6px;margin-top:8px}.wrRecord{display:flex;justify-content:space-between;gap:8px;padding:9px;border-radius:9px;background:#ffffff13;font-size:12px}.wrRecord strong{color:#ffe47d}.wrSelect{width:100%;padding:10px;border-radius:10px;margin:6px 0;font-size:14px}.wrRankRow{padding:8px;border-bottom:1px solid #ffffff23;font-size:13px}
@@ -542,7 +553,7 @@ function write(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 let profile=read('winningMemoryProfileV43',null);
 window.winningNickname=()=>profile?.nickname||'PLAYER';
 const panel=document.createElement('div');panel.className='wrPanel';panel.id='wrPanel';
-panel.innerHTML='<h3>👤 나의 선수 프로필</h3><div class="wrRow"><input id="wrNick" class="wrInput" maxlength="16" placeholder="선수 이름 (2~16자)"><button id="wrRegister" class="wrButton">등록</button></div><div id="wrProfileStatus" class="wrSmall">이름을 등록하면 개인 기록을 저장할 수 있어요.</div><h3 style="margin-top:15px">🏆 대회별 최고 기록</h3><div id="wrRecords" class="wrRecords"></div><h3 style="margin-top:15px">🌐 온라인 순위 보기</h3><select id="wrTour" class="wrSelect"></select><button id="wrLoad" class="wrButton" style="width:100%">온라인 순위 조회</button><div id="wrLeaderboard" class="wrSmall">온라인 점수 등록은 아직 준비 중입니다.</div>';
+panel.innerHTML='<h3>👤 나의 선수 프로필</h3><div class="wrRow"><input id="wrNick" class="wrInput" maxlength="16" placeholder="선수 이름 (2~16자)"><button id="wrRegister" class="wrButton">등록</button></div><div id="wrProfileStatus" class="wrSmall">이름을 등록하면 개인 기록을 저장할 수 있어요.</div><h3 style="margin-top:15px">🏆 대회별 최고 기록</h3><div id="wrRecords" class="wrRecords"></div><h3 style="margin-top:15px">🌐 온라인 순위 보기</h3><select id="wrTour" class="wrSelect"></select><button id="wrLoad" class="wrButton" style="width:100%">온라인 순위 조회</button><div id="wrLeaderboard" class="wrSmall">게임을 완료하면 온라인 점수가 자동 등록됩니다.</div>';
 const home=$('home');home.insertAdjacentElement('afterend',panel);
 const result=$('result');const resultNotice=document.createElement('div');resultNotice.className='wrPanel';resultNotice.id='wrResultNotice';resultNotice.style.marginTop='12px';result.appendChild(resultNotice);
 const select=$('wrTour');names.slice(1).forEach((name,i)=>{const op=document.createElement('option');op.value=i+1;op.textContent=(i+1)+'회 '+name+'대회';select.appendChild(op)});
@@ -563,7 +574,20 @@ window.winningSaveSolo=(tour,score,correct,avgMs)=>{
  const rec=read(key,{});const old=rec[tour];
  if(!old||score>old.score||(score===old.score&&avgMs<old.avgMs))rec[tour]={score,correct,avgMs,date:new Date().toISOString()};
  write(key,rec);draw();
- const best=rec[tour];$('wrResultNotice').textContent=`💾 ${names[tour]}대회 개인 최고 기록: ${best.score}점 · 정답 ${best.correct}/13 · 평균 ${(best.avgMs/1000).toFixed(1)}초 (이 기기에 저장됨)`;
+ const best=rec[tour];
+ const notice=$('wrResultNotice');
+ notice.textContent=`💾 ${names[tour]}대회 개인 최고 기록: ${best.score}점 · 정답 ${best.correct}/13 · 평균 ${(best.avgMs/1000).toFixed(1)}초 (이 기기에 저장됨)`;
+ if(!profile?.id){notice.textContent+=' · 온라인 등록하려면 홈에서 선수 프로필을 등록하세요.';return;}
+ notice.textContent+=' · 온라인 순위 등록 중...';
+ fetch(API+'/score',{
+   method:'POST',
+   headers:{'content-type':'application/json'},
+   body:JSON.stringify({profile_id:profile.id,tournament:String(tour),score:Math.round(score),correct:Math.round(correct),average_ms:Math.round(avgMs)})
+ }).then(async response=>{
+   const data=await response.json();
+   if(!response.ok||!data.ok)throw Error(data.error||'서버 응답 오류');
+   notice.textContent+=' · 🏆 온라인 순위 등록 완료!';
+ }).catch(error=>{notice.textContent+=' · ⚠️ 온라인 등록 실패: '+error.message;});
 };
 $('wrLoad').addEventListener('click',async()=>{
  const target=$('wrLeaderboard');target.textContent='온라인 순위를 불러오는 중...';
@@ -575,29 +599,4 @@ $('wrLoad').addEventListener('click',async()=>{
 if(profile?.id){fetch(API+'/profiles?id='+encodeURIComponent(profile.id)).then(r=>{if(!r.ok)throw Error();return r.json()}).then(d=>{if(d.profile?.id){profile.online=true;write('winningMemoryProfileV43',profile);draw()}}).catch(()=>{})}
 draw();
 })();
-</script><script>
-(()=>{
-'use strict';
-const API='https://winning-memory-ranking.wonkyo76-f73.workers.dev';
-const NAMES=['','산곡동','부평구','인천광역시','전국','아시안게임','올림픽'];
-const panel=document.getElementById('wrPanel');
-if(!panel)return;
-const wrap=document.createElement('section');wrap.className='wrPanel';wrap.id='officialOnline';
-wrap.innerHTML=`<h3>🌐 공식 온라인 기억왕 도전</h3><p class="wrSmall">기존 게임과 별도 대회입니다. 숫자를 10초 동안 외운 뒤 입력하세요. 서버가 13문제의 정답과 점수를 검증합니다.</p><select id="officialTour" class="wrSelect" aria-label="공식 온라인 대회 선택"></select><button id="officialStart" class="wrButton" style="width:100%">🏁 공식 온라인 도전 시작</button><div id="officialStage" class="wrSmall" aria-live="polite">선수 프로필 등록 후 도전할 수 있습니다.</div><div id="officialQuestion" class="hidden" style="text-align:center"><div id="officialCount" style="font-size:20px;color:#ffe47d;margin:10px"></div><div id="officialDigits" style="font-size:37px;letter-spacing:6px;font-weight:900;word-break:break-all;margin:15px 0"></div><form id="officialForm" class="hidden"><label for="officialAnswer">기억한 숫자를 입력하세요</label><input id="officialAnswer" class="wrInput" style="width:100%;margin:10px 0" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required maxlength="8"><button class="wrButton" style="width:100%" type="submit">정답 제출</button></form></div><button id="officialRank" class="wrButton" style="width:100%;margin-top:9px">🏆 공식 온라인 순위 새로고침</button><div id="officialRows" class="wrSmall"></div>`;
-panel.insertAdjacentElement('afterend',wrap);
-const $=id=>document.getElementById(id);
-for(let i=1;i<=6;i++){const o=document.createElement('option');o.value=i;o.textContent=i+'회 '+NAMES[i]+'대회';$('officialTour').append(o)}
-let session=null,stage=0,waiting=false,timer=null,active=false;
-function message(s){$('officialStage').textContent=s}
-function stopTimer(){if(timer){clearInterval(timer);timer=null}}
-function profile(){try{return JSON.parse(localStorage.getItem('winningMemoryProfileV43'))}catch{return null}}
-async function request(path,data){const controller=new AbortController();const t=setTimeout(()=>controller.abort(),18000);try{const r=await fetch(API+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data),signal:controller.signal});let j={};try{j=await r.json()}catch{}if(!r.ok||j.error)throw Error(j.error||'서버 응답 오류 '+r.status);return j}finally{clearTimeout(t)}}
-function showQuestion(data){stopTimer();waiting=true;active=true;stage=data.question;$('officialQuestion').classList.remove('hidden');$('officialForm').classList.add('hidden');$('officialDigits').textContent=data.memorize_digits;const until=Date.now()+10000;message('문제 '+stage+'/13 · 숫자를 기억하세요');const tick=()=>{const left=Math.max(0,Math.ceil((until-Date.now())/1000));$('officialCount').textContent='기억 시간 '+left+'초';if(left===0){stopTimer();$('officialDigits').textContent='❓ ❓ ❓';$('officialForm').classList.remove('hidden');$('officialAnswer').value='';waiting=false;message('문제 '+stage+'/13 · 기억한 숫자를 입력하세요')}};tick();timer=setInterval(tick,100)}
-$('officialStart').addEventListener('click',async()=>{if(active)return;const p=profile();if(!p?.id){message('먼저 위의 선수 프로필에서 이름을 등록해 주세요.');return}const btn=$('officialStart');btn.disabled=true;message('공식 온라인 대회를 준비하고 있습니다...');try{const d=await request('/session/start',{profile_id:p.id,tournament:Number($('officialTour').value)});session=d.session_id;showQuestion(d)}catch(e){message('시작 실패: '+e.message+' · 서버 설정을 확인해야 합니다.');btn.disabled=false;active=false}});
-$('officialForm').addEventListener('submit',async e=>{e.preventDefault();if(waiting||!active||!session)return;const answer=$('officialAnswer').value.trim();if(!/^\d{3,8}$/.test(answer)){message('숫자 3~8자리를 입력하세요.');return}waiting=true;const b=$('officialForm').querySelector('button');b.disabled=true;message('서버에서 정답을 확인하는 중...');try{const d=await request('/session/answer',{session_id:session,answer});if(d.finished){stopTimer();active=false;session=null;$('officialQuestion').classList.add('hidden');$('officialStart').disabled=false;message('🏆 공식 온라인 도전 완료! '+d.score+'점 · 정답 '+d.correct_count+'/13 · 평균 '+(d.average_ms/1000).toFixed(1)+'초');await loadRank()}else{showQuestion(d)}}catch(err){message('제출 오류: '+err.message+' · 같은 답을 다시 제출하지 마세요. 새 도전이 필요할 수 있습니다.');active=false;session=null;$('officialQuestion').classList.add('hidden');$('officialStart').disabled=false}finally{waiting=false;b.disabled=false}});
-async function loadRank(){const target=$('officialRows');target.textContent='순위를 불러오는 중...';try{const r=await fetch(API+'/leaderboard?tournament='+encodeURIComponent($('officialTour').value),{cache:'no-store'});if(!r.ok)throw Error('서버 오류');const d=await r.json();target.replaceChildren();if(!d.rows?.length){target.textContent='아직 공식 온라인 대회 기록이 없습니다.';return}d.rows.forEach((x,i)=>{const line=document.createElement('div');line.className='wrRankRow';line.textContent=(i+1)+'위 '+x.nickname+' · '+x.score+'점 · 정답 '+x.correct+'/13';target.append(line)})}catch(e){target.textContent='온라인 순위 조회에 실패했습니다.'}}
-$('officialRank').addEventListener('click',loadRank);
-$('officialTour').addEventListener('change',()=>{if(!active)loadRank()});
-})();
-
 </script></body></html>
