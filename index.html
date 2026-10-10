@@ -553,7 +553,7 @@ function write(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 let profile=read('winningMemoryProfileV43',null);
 window.winningNickname=()=>profile?.nickname||'PLAYER';
 const panel=document.createElement('div');panel.className='wrPanel';panel.id='wrPanel';
-panel.innerHTML='<h3>👤 나의 선수 프로필</h3><div class="wrRow"><input id="wrNick" class="wrInput" maxlength="16" placeholder="선수 이름 (2~16자)"><button id="wrRegister" class="wrButton">등록</button></div><div id="wrProfileStatus" class="wrSmall">이름을 등록하면 개인 기록을 저장할 수 있어요.</div><h3 style="margin-top:15px">🏆 대회별 최고 기록</h3><div id="wrRecords" class="wrRecords"></div><h3 style="margin-top:15px">🌐 온라인 순위 보기</h3><select id="wrTour" class="wrSelect"></select><button id="wrLoad" class="wrButton" style="width:100%">온라인 순위 조회</button><div id="wrLeaderboard" class="wrSmall">게임을 완료하면 온라인 점수가 자동 등록됩니다.</div>';
+panel.innerHTML='<h3>👤 나의 선수 프로필</h3><div class="wrRow"><input id="wrNick" class="wrInput" maxlength="16" placeholder="선수 이름 (2~16자)"><button id="wrRegister" class="wrButton">등록</button></div><div id="wrProfileStatus" class="wrSmall">이름을 등록하면 개인 기록을 저장할 수 있어요.</div><h3 style="margin-top:15px">🏆 대회별 최고 기록</h3><div id="wrRecords" class="wrRecords"></div><button id="wrSync" class="wrButton" style="width:100%;margin:12px 0">🏆 저장된 최고 기록 온라인 등록</button><div id="wrSyncStatus" class="wrSmall">기존 최고 기록을 다시 플레이하지 않고 등록할 수 있습니다.</div><h3 style="margin-top:15px">🌐 온라인 순위 보기</h3><select id="wrTour" class="wrSelect"></select><button id="wrLoad" class="wrButton" style="width:100%">온라인 순위 조회</button><div id="wrLeaderboard" class="wrSmall">게임을 완료하면 온라인 점수가 자동 등록됩니다.</div>';
 const home=$('home');home.insertAdjacentElement('afterend',panel);
 const result=$('result');const resultNotice=document.createElement('div');resultNotice.className='wrPanel';resultNotice.id='wrResultNotice';resultNotice.style.marginTop='12px';result.appendChild(resultNotice);
 const select=$('wrTour');names.slice(1).forEach((name,i)=>{const op=document.createElement('option');op.value=i+1;op.textContent=(i+1)+'회 '+name+'대회';select.appendChild(op)});
@@ -589,6 +589,21 @@ window.winningSaveSolo=(tour,score,correct,avgMs)=>{
    notice.textContent+=' · 🏆 온라인 순위 등록 완료!';
  }).catch(error=>{notice.textContent+=' · ⚠️ 온라인 등록 실패: '+error.message;});
 };
+$('wrSync').addEventListener('click',async()=>{
+ const status=$('wrSyncStatus');const button=$('wrSync');
+ if(!profile?.id){status.textContent='먼저 위의 선수 프로필에서 이름을 등록해 주세요.';return;}
+ const rec=read(key,{});const entries=Object.entries(rec).filter(([t,r])=>/^[1-6]$/.test(t)&&r&&Number.isFinite(Number(r.score))&&Number.isFinite(Number(r.correct))&&Number.isFinite(Number(r.avgMs)));
+ if(!entries.length){status.textContent='저장된 최고 기록이 없습니다.';return;}
+ button.disabled=true;status.textContent='온라인 순위 등록 중...';let saved=0;let failed=[];
+ for(const [tour,r] of entries){
+  try{
+   const response=await fetch(API+'/score',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({profile_id:profile.id,tournament:tour,score:Math.round(Number(r.score)),correct:Math.round(Number(r.correct)),average_ms:Math.round(Number(r.avgMs))})});
+   const data=await response.json();if(!response.ok||!data.ok)throw Error(data.error||'서버 오류');saved++;
+  }catch(e){failed.push(names[Number(tour)]+': '+e.message)}
+ }
+ status.textContent=saved+'개 대회 온라인 등록 완료'+(failed.length?' · 실패: '+failed.join(', '):' · 아래 온라인 순위 조회를 눌러 확인하세요.');
+ button.disabled=false;
+});
 $('wrLoad').addEventListener('click',async()=>{
  const target=$('wrLeaderboard');target.textContent='온라인 순위를 불러오는 중...';
  try{const response=await fetch(API+'/leaderboard?tournament='+select.value);if(!response.ok)throw Error();const data=await response.json();target.replaceChildren();
